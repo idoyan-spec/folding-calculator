@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="favicon.png" type="image/png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>מחשבון עסק הקיפול</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&family=Bellefair&family=IBM+Plex+Sans+Hebrew:wght@400;500;600&display=swap">
+<style>
+/* Layout: RTL two-column - inputs on the right, sticky "balance" panel on the left; one column on phones */
+:root{
+  --bg:#F1F4F3; --surface:#FFFFFF; --surface-2:#F7F9F8; --ink:#25302E; --muted:#6A7774; --line:#DCE3E1;
+  --accent:#5A8981; --accent-soft:#E2EEEB; --accent-ink:#2F5F57;
+  --rose:#C68A86; --sand:#CDB78C; --lav:#9B92C2; --sky:#8DB0CC;
+  --good:#4C956A; --good-soft:#E3F1E7; --warn:#B98A2E; --warn-soft:#F6EEDC; --bad:#B95F59; --bad-soft:#F6E4E2;
+  --f-display:"Bellefair","Frank Ruhl Libre",Georgia,serif;
+  --f-body:"Assistant","Segoe UI",Arial,sans-serif;
+  --f-num:"IBM Plex Sans Hebrew","Assistant","Segoe UI",Arial,sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#151B1A; --surface:#1D2524; --surface-2:#222B2A; --ink:#E4ECEA; --muted:#98A6A3; --line:#2F3B39;
+  --accent:#86B9B0; --accent-soft:#253633; --accent-ink:#B5DCD5;
+  --rose:#D9A19D; --sand:#D2BE93; --lav:#B2AADC; --sky:#9DBFDA;
+  --good:#79C394; --good-soft:#1F3328; --warn:#DDB25E; --warn-soft:#3A3120; --bad:#E08C85; --bad-soft:#3D2523;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#151B1A; --surface:#1D2524; --surface-2:#222B2A; --ink:#E4ECEA; --muted:#98A6A3; --line:#2F3B39;
+  --accent:#86B9B0; --accent-soft:#253633; --accent-ink:#B5DCD5;
+  --rose:#D9A19D; --sand:#D2BE93; --lav:#B2AADC; --sky:#9DBFDA;
+  --good:#79C394; --good-soft:#1F3328; --warn:#DDB25E; --warn-soft:#3A3120; --bad:#E08C85; --bad-soft:#3D2523;
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;direction:rtl}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 40px}
+header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(30px,4.4vw,44px);line-height:1.1;margin:0;text-wrap:balance}
+.lede{color:var(--muted);margin:6px 0 0;max-width:62ch}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+.btn{font:inherit;font-size:13.5px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 14px;cursor:pointer}
+.btn:hover{border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.danger{border-color:var(--bad);color:var(--bad)}
+
+.grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:920px){.grid{grid-template-columns:minmax(0,1fr)}}
+.col{display:flex;flex-direction:column;gap:18px;min-width:0}
+.sticky{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}
+@media (max-width:920px){.sticky{position:static}}
+
+section.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px}
+.sec-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.sec-head h2{font-family:var(--f-display);font-weight:400;font-size:24px;margin:0;line-height:1.15}
+.sec-head p{margin:0;color:var(--muted);font-size:13.5px}
+.ico{flex:none;width:40px;height:40px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);display:grid;place-items:center}
+.ico svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.ico.sm{width:34px;height:34px}.ico.sm svg{width:21px;height:21px}
+
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 22px}
+@media (max-width:560px){.fields{grid-template-columns:minmax(0,1fr)}}
+.field{min-width:0}
+.field-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px}
+.field-top label{font-size:14px;font-weight:600;display:flex;align-items:center;gap:7px}
+.field-top label svg{width:18px;height:18px;fill:none;stroke:var(--accent);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.num{display:flex;align-items:baseline;gap:4px;white-space:nowrap}
+.num input,.num output{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:15px;width:76px;text-align:center;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:8px;padding:3px 4px}
+.num output{display:inline-block;border-color:transparent;background:transparent}
+.unit{font-size:12px;color:var(--muted)}
+.hint{font-size:12.5px;color:var(--muted);min-height:1.2em}
+
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:22px;background:transparent;margin:2px 0;cursor:pointer;--p:50%}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:6px;background:linear-gradient(to left,var(--accent) var(--p),var(--line) var(--p))}
+input[type=range]::-moz-range-track{height:6px;border-radius:6px;background:var(--line)}
+input[type=range]::-moz-range-progress{height:6px;border-radius:6px;background:var(--accent)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--surface);border:2px solid var(--accent);margin-top:-7px;box-shadow:0 1px 4px rgba(0,0,0,.12);transition:transform .15s}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--surface);border:2px solid var(--accent)}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.15)}
+
+/* items */
+.items{display:flex;flex-direction:column}
+.item{display:grid;grid-template-columns:44px minmax(0,1fr) minmax(0,1fr) auto;gap:6px 16px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item .nm{grid-column:2/-1;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.item .nm b{font-weight:600}
+.item .nm small{color:var(--muted);font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.item .ico{grid-row:1/3}
+.item .mini{min-width:0}
+.item .mini .field-top label{font-weight:400;font-size:12.5px;color:var(--muted)}
+.item .num input{width:60px;font-size:14px}
+.measure-btn{font:inherit;font-size:12.5px;border:1px dashed var(--accent);color:var(--accent-ink);background:transparent;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.measure-btn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:560px){.item{grid-template-columns:40px minmax(0,1fr)}.item .mini,.item .mbox{grid-column:2}.item .ico{grid-row:1/5}}
+.drawer{grid-column:1/-1;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.drawer .stopwatch{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:26px;min-width:5.5ch;color:var(--accent-ink)}
+.drawer label{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.drawer input{font-family:var(--f-num);width:58px;text-align:center;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:3px}
+.drawer .res{font-size:13.5px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.btn.primary:hover{color:var(--surface);opacity:.92}
+
+/* balance panel */
+.balance{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px}
+.verdict{display:flex;gap:14px;align-items:center;border-radius:14px;padding:14px 16px;margin-bottom:16px}
+.verdict.good{background:var(--good-soft)} .verdict.warn{background:var(--warn-soft)} .verdict.bad{background:var(--bad-soft)}
+.verdict .dot{width:12px;height:12px;border-radius:50%;flex:none}
+.verdict.good .dot{background:var(--good)}.verdict.warn .dot{background:var(--warn)}.verdict.bad .dot{background:var(--bad)}
+.verdict b{font-size:17px;display:block}
+.verdict span{font-size:13.5px;color:var(--muted)}
+.trio{display:flex;flex-direction:column;gap:12px;margin-bottom:6px}
+.tfield{border:1px solid var(--line);border-radius:12px;padding:10px 12px 6px;background:var(--surface-2)}
+.tfield.locked{border-color:var(--accent);background:var(--accent-soft)}
+.tfield.changed .num input{animation:flash .6s}
+@keyframes flash{from{background:var(--accent-soft);border-color:var(--accent)}}
+.lock{font:inherit;font-size:12px;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:2px 9px;cursor:pointer;display:inline-flex;gap:4px;align-items:center}
+.lock svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.tfield.locked .lock{border-color:var(--accent);color:var(--accent-ink)}
+.trio-note{font-size:12.5px;color:var(--muted);margin:0 0 14px}
+.warnline{font-size:13px;color:var(--bad);margin-top:2px}
+
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0 4px}
+.kpi{border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
+.kpi .k{font-size:12.5px;color:var(--muted)}
+.kpi .v{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-size:22px;font-weight:500;line-height:1.2}
+.kpi .s{font-size:12px;color:var(--muted)}
+
+h3{font-family:var(--f-display);font-weight:400;font-size:20px;margin:18px 0 8px}
+.stack{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--line)}
+.stack i{display:block;height:100%;transition:width .35s}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--muted);margin-top:7px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend b{font-family:var(--f-num);font-weight:500;color:var(--ink)}
+.legend i{width:9px;height:9px;border-radius:3px;display:inline-block}
+
+.day{position:relative;height:46px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden}
+.day .blk{position:absolute;top:6px;bottom:6px;border-radius:6px;display:grid;place-items:center;font-size:11px;color:var(--ink);overflow:hidden;white-space:nowrap}
+.day .blk.v{background:var(--accent-soft);border:1px solid var(--accent)}
+.day .blk.t{background:repeating-linear-gradient(135deg,var(--sand) 0 3px,transparent 3px 7px);opacity:.75}
+.day .blk.over{border-color:var(--bad);background:var(--bad-soft)}
+.ticks{position:relative;height:18px;font-family:var(--f-num);font-size:11px;color:var(--muted)}
+.ticks span{position:absolute;transform:translateX(50%)}
+
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:right;padding:7px 6px;border-bottom:1px solid var(--line)}
+th{font-weight:600;color:var(--muted);font-size:12.5px}
+td.n{font-family:var(--f-num);font-variant-numeric:tabular-nums;text-align:left;white-space:nowrap}
+td .cell{display:flex;align-items:center;gap:8px}
+td .cell svg{width:18px;height:18px;fill:none;stroke:var(--accent);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+footer{margin-top:26px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:12.5px}
+footer code{font-family:var(--f-num)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>מחשבון עסק הקיפול</h1>
+      <p class="lede">קיפול וסידור ארונות בבתים פרטיים. מזיזים סליידר, וכל השאר מתעדכן: כמה לגבות, כמה נשאר ביד, וכמה שעות זה לוקח.</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <span class="tag">הערכים ההתחלתיים הם דוגמה בלבד</span>
+      <button class="btn" id="resetBtn" type="button">איפוס לדוגמה</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="col" id="inputs">
+      <section class="card">
+        <div class="sec-head"><div class="ico" data-icon="shirt"></div><div><h2>זמני קיפול</h2><p>כמה שניות לוקח לקפל כל פריט, וכמה פריטים יש בביקור רגיל. אפשר למדוד עם שעון עצר.</p></div></div>
+        <div class="items" id="items"></div>
+        <div class="fields" style="margin-top:10px" id="f-diff"></div>
+      </section>
+
+      <section class="card">
+        <div class="sec-head"><div class="ico" data-icon="closet"></div><div><h2>עבודת ארון ונסיעה</h2><p>מה עוד קורה בכל ביקור, מעבר לקיפול.</p></div></div>
+        <div class="fields" id="f-services"></div>
+      </section>
+
+      <section class="card">
+        <div class="sec-head"><div class="ico" data-icon="clock"></div><div><h2>הזמן שלה</h2><p>מתי נוח לעבוד, מתי יוצאים לילדים, וכמה זמן הולך על העבודה שמסביב.</p></div></div>
+        <div class="fields" id="f-time"></div>
+      </section>
+
+      <section class="card">
+        <div class="sec-head"><div class="ico" data-icon="coins"></div><div><h2>הוצאות ומטרות</h2><p>הוצאות קבועות, מס, השקעה ראשונית, ולמה משווים.</p></div></div>
+        <div class="fields" id="f-money"></div>
+      </section>
+    </div>
+
+    <div class="col sticky">
+      <div class="balance">
+        <div class="verdict" id="verdict"><span class="dot"></span><div><b id="vTitle"></b><span id="vText"></span></div></div>
+        <div class="sec-head" style="margin-bottom:8px"><div class="ico sm" data-icon="scale"></div><div><h2>האיזון</h2></div></div>
+        <p class="trio-note">שלושת הסליידרים קשורים זה לזה. הנעול נשאר במקומו, ומזיזים אחד מהשניים האחרים כדי לראות איך השלישי זז.</p>
+        <div class="trio" id="trio"></div>
+        <div class="kpis" id="kpis"></div>
+
+        <h3>לאן הולך הזמן בחודש</h3>
+        <div class="stack" id="timeBar"></div>
+        <div class="legend" id="timeLegend"></div>
+
+        <h3>לאן הולך הכסף בחודש</h3>
+        <div class="stack" id="moneyBar"></div>
+        <div class="legend" id="moneyLegend"></div>
+
+        <h3>יום עבודה טיפוסי</h3>
+        <div class="day" id="day"></div>
+        <div class="ticks" id="ticks"></div>
+        <div class="hint" id="dayNote"></div>
+
+        <h3>מחירון שנגזר מהמחיר לשעה</h3>
+        <div class="tbl-wrap"><table><thead><tr><th>פריט או שירות</th><th style="text-align:left">ליחידה</th><th style="text-align:left">ל-10</th></tr></thead><tbody id="prices"></tbody></table></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>החישוב משוער. מס וביטוח לאומי מוזנים כאחוז כולל אחד, ושווה לבדוק מול רואה חשבון.</span>
+    <span>גרסה <code id="build"></code></span>
+  </footer>
+</div>
+
+<script>
+const BUILD = "2026-11-09 08:10 v1 folding-dashboard";
+document.getElementById('build').textContent = BUILD;
+
+/* thin line icons, 24x24, stroke only */
+const ICONS = {
+  shirt:'<path d="M8.5 3.5 4 6l1.8 3.6L8 8.8V20h8V8.8l2.2.8L20 6l-4.5-2.5c-.6 1.4-1.9 2.2-3.5 2.2S9.1 4.9 8.5 3.5z"/>',
+  pants:'<path d="M7 3.5h10l1.2 17h-4.1L12 10l-2.1 10.5H5.8z"/><path d="M7 6.5h10M12 6.5V10"/>',
+  kids:'<path d="M9.5 3.5c.3 1.2 1.3 2 2.5 2s2.2-.8 2.5-2l3.8 2-1.3 3-1.5-.6V14l1.5 5.5H14l-2-2.8-2 2.8H7.5L9 14V7.9l-1.5.6-1.3-3z"/><circle cx="12" cy="10.5" r=".6"/>',
+  under:'<path d="M3.5 7h17v3.2c-3 .6-5.4 3.3-6.2 7.3H9.7c-.8-4-3.2-6.7-6.2-7.3z"/><path d="M3.5 9h17"/>',
+  socks:'<path d="M8 3.5h5v8.2l3.6 3.4a2.4 2.4 0 0 1-3.4 3.4L8.6 14a2 2 0 0 1-.6-1.4z"/><path d="M8 6.5h5"/>',
+  towel:'<path d="M6 4h11a3 3 0 0 1 3 3v13H9V7a3 3 0 0 0-3-3z"/><path d="M6 4a3 3 0 0 0-3 3v2h6M9 16.5h11M9 18.5h11"/>',
+  sheet:'<path d="M3 8.5 12 4.5l9 4-9 4z"/><path d="M3 8.5v7l9 4 9-4v-7M12 12.5v7"/>',
+  bedding:'<path d="M3 19V7M3 15h18v4M21 15v-2.5a2.5 2.5 0 0 0-2.5-2.5H11v5"/><rect x="5" y="11" width="4" height="3" rx="1.2"/>',
+  closet:'<rect x="5" y="3" width="14" height="17" rx="1"/><path d="M12 3v17M10 10.5v2M14 10.5v2M6.5 20v1.5M17.5 20v1.5"/>',
+  box:'<path d="M3.5 7.5h17v3h-17z"/><path d="M5 10.5v9h14v-9M10 14h4"/>',
+  hanger:'<path d="M12 8.5V8c0-1 2-1.4 2-3a2 2 0 0 0-4 0"/><path d="M12 8.5 3.5 15a.8.8 0 0 0 .5 1.5h16a.8.8 0 0 0 .5-1.5z"/>',
+  plan:'<path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3M4 20h16"/>',
+  car:'<path d="M4 16.5v-4l2-5h12l2 5v4z"/><path d="M4 12.5h16"/><circle cx="7.5" cy="17.5" r="1.7"/><circle cx="16.5" cy="17.5" r="1.7"/>',
+  clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  sun:'<circle cx="12" cy="12" r="3.5"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/>',
+  home:'<path d="M4 11 12 4.5 20 11"/><path d="M6 9.5V20h12V9.5M10 20v-5h4v5"/>',
+  calendar:'<rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>',
+  mega:'<path d="M4 10v4h3l7 4V6l-7 4z"/><path d="M7 14l1 5h2.5l-1-4.5M17.5 9.5a3.5 3.5 0 0 1 0 5"/>',
+  phone:'<path d="M6.5 4h3l1.5 4-2 1.3a10 10 0 0 0 5.7 5.7L16 13l4 1.5v3A2 2 0 0 1 18 19.5 15.5 15.5 0 0 1 4.5 6 2 2 0 0 1 6.5 4z"/>',
+  ledger:'<path d="M6 3.5h11a1 1 0 0 1 1 1V20.5H7a2 2 0 0 1-2-2v-13a2 2 0 0 1 1-2z"/><path d="M5 18.5a2 2 0 0 1 2-2h11M9 7.5h6M9 10.5h4"/>',
+  coins:'<ellipse cx="9" cy="7" rx="5" ry="2.5"/><path d="M4 7v4c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5V7"/><path d="M10 15.5v2c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5v-4c0-1.4-2.2-2.5-5-2.5"/>',
+  receipt:'<path d="M6 3.5h12v17l-2-1.3-2 1.3-2-1.3-2 1.3-2-1.3-2 1.3z"/><path d="M9 8h6M9 11h6M9 14h4"/>',
+  percent:'<path d="M18 6 6 18"/><circle cx="7.5" cy="7.5" r="2"/><circle cx="16.5" cy="16.5" r="2"/>',
+  spark:'<path d="M12 3.5v4M12 16.5v4M3.5 12h4M16.5 12h4"/><path d="M12 8.5 13.2 10.8 15.5 12l-2.3 1.2L12 15.5l-1.2-2.3L8.5 12l2.3-1.2z"/>',
+  briefcase:'<rect x="3.5" y="7.5" width="17" height="12" rx="2"/><path d="M9 7.5V5.5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3.5 12.5h17"/>',
+  scale:'<path d="M12 4v16M7 20h10M5 7h14"/><path d="M5 7 2.5 13a2.5 2.5 0 0 0 5 0zM19 7l-2.5 6a2.5 2.5 0 0 0 5 0z"/>',
+  hours:'<circle cx="12" cy="13" r="7.5"/><path d="M12 9v4h3M10 3h4"/>',
+  wallet:'<path d="M4 7.5h14a2 2 0 0 1 2 2v8.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M4 7.5 15 4v3.5M15.5 13.5h4.5"/>',
+  lock:'<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/>',
+  unlock:'<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 7.7-1.5"/>',
+  timer:'<circle cx="12" cy="13.5" r="7"/><path d="M12 10v3.5M10 3.5h4M18 7l1.5-1.5"/>'
+};
+const svg = (n) => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[n]||''}</svg>`;
+document.querySelectorAll('[data-icon]').forEach(el => el.innerHTML = svg(el.dataset.icon));
+
+const WEEKS = 4.33;
+const ITEMS = [
+  {id:'shirt', name:'חולצות', icon:'shirt', sec:40, qty:25},
+  {id:'pants', name:'מכנסיים', icon:'pants', sec:45, qty:15},
+  {id:'kids', name:'בגדי ילדים', icon:'kids', sec:25, qty:30},
+  {id:'under', name:'תחתונים', icon:'under', sec:12, qty:20},
+  {id:'socks', name:'גרביים (זוג)', icon:'socks', sec:10, qty:20},
+  {id:'towel', name:'מגבות', icon:'towel', sec:30, qty:10},
+  {id:'sheet', name:'סדינים', icon:'sheet', sec:120, qty:4},
+  {id:'bedding', name:'סט מצעים', icon:'bedding', sec:180, qty:2}
+];
+const DEF = {
+  diff:1, clear:30, arrange:45, plan:15, travelMin:40, travelCost:20,
+  days:4, start:8.5, end:14, mkt:2, phone:1.5, books:0.5,
+  ads:400, acct:250, other:100, tax:20, startup:1500, months:12, alt:50,
+  price:150, hours:45, net:0, lock:'hours'
+};
+ITEMS.forEach(i => { DEF['t_'+i.id] = i.sec; DEF['q_'+i.id] = i.qty; });
+
+const STORE = 'folding-calc-v1';
+let S = {...DEF};
+try { const saved = JSON.parse(localStorage.getItem(STORE)||'null'); if (saved) S = {...DEF, ...saved}; } catch(e){}
+const save = () => { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch(e){} };
+
+const nf = (v, d=0) => isFinite(v) ? v.toLocaleString('he-IL',{maximumFractionDigits:d, minimumFractionDigits:d}) : '—';
+const ils = (v, d=0) => isFinite(v) ? '₪' + nf(v, d) : '—';
+const hhmm = (h) => { const m = Math.round(h*60); return String(Math.floor(m/60)).padStart(2,'0') + ':' + String(m%60).padStart(2,'0'); };
+const dur = (h) => { if(!isFinite(h)) return '—'; const m = Math.round(h*60); return m < 60 ? `${m} דק׳` : `${Math.floor(m/60)}:${String(m%60).padStart(2,'0')} שע׳`; };
+
+const F = {}; // key -> {def, range, num, hint, wrap}
+function field(container, def) {
+  const id = 'f_' + def.key;
+  const wrap = document.createElement('div');
+  wrap.className = 'field' + (def.cls ? ' ' + def.cls : '');
+  const numHtml = def.fmt
+    ? `<output id="${id}-n"></output>`
+    : `<input type="number" id="${id}-n" min="${def.min}" max="${def.numMax ?? def.max}" step="${def.step}" inputmode="decimal">`;
+  wrap.innerHTML = `
+    <div class="field-top"><label for="${id}">${def.icon ? svg(def.icon) : ''}${def.label}</label>
+      <span class="num">${numHtml}<span class="unit">${def.unit||''}</span>${def.extra||''}</span></div>
+    <input type="range" id="${id}" min="${def.min}" max="${def.max}" step="${def.step}">
+    <div class="hint" id="${id}-h"></div>`;
+  container.appendChild(wrap);
+  const f = {def, wrap, range: wrap.querySelector('input[type=range]'), num: wrap.querySelector('#'+id+'-n'), hint: wrap.querySelector('#'+id+'-h')};
+  F[def.key] = f;
+  f.range.addEventListener('input', () => { S[def.key] = +f.range.value; onChange(def.key, f); });
+  if (!def.fmt) f.num.addEventListener('input', () => {
+    const v = parseFloat(f.num.value); if (!isFinite(v)) return;
+    S[def.key] = v; onChange(def.key, f, true);
+  });
+  return f;
+}
+function paint(key, fromNum) {
+  const f = F[key]; if (!f) return;
+  const d = f.def, v = S[key];
+  const clamped = Math.min(d.max, Math.max(d.min, v));
+  f.range.value = clamped;
+  f.range.style.setProperty('--p', ((clamped - d.min) / (d.max - d.min) * 100) + '%');
+  if (d.fmt) f.num.textContent = d.fmt(v);
+  else if (!fromNum) f.num.value = isFinite(v) ? +v.toFixed(d.dec ?? 0) : '';
+}
+
+/* ---- build inputs ---- */
+const itemsEl = document.getElementById('items');
+ITEMS.forEach(it => {
+  const row = document.createElement('div');
+  row.className = 'item';
+  row.innerHTML = `<div class="ico">${svg(it.icon)}</div>
+    <div class="nm"><b>${it.name}</b><small id="tot_${it.id}"></small></div>`;
+  itemsEl.appendChild(row);
+  const a = document.createElement('div'); a.className = 'mini'; row.appendChild(a);
+  const b = document.createElement('div'); b.className = 'mini'; row.appendChild(b);
+  field(a, {key:'t_'+it.id, label:'שניות לפריט', min:3, max:300, numMax:3600, step:1, unit:'שנ׳'});
+  field(b, {key:'q_'+it.id, label:'כמות בביקור', min:0, max:80, numMax:500, step:1, unit:'יח׳'});
+  const mb = document.createElement('div'); mb.className = 'mbox';
+  mb.innerHTML = `<button type="button" class="measure-btn" id="m_${it.id}">${svg('timer')}מדידה</button>`;
+  row.appendChild(mb);
+  mb.firstChild.addEventListener('click', () => toggleDrawer(it, row));
+});
+
+field(document.getElementById('f-diff'), {key:'diff', label:'רמת קושי של הבית', icon:'spark', min:0.6, max:2, step:0.05, dec:2, unit:'×'});
+
+const sv = document.getElementById('f-services');
+field(sv, {key:'clear', label:'פינוי ארון', icon:'box', min:0, max:180, step:5, unit:'דק׳'});
+field(sv, {key:'arrange', label:'סידור ארון', icon:'hanger', min:0, max:180, step:5, unit:'דק׳'});
+field(sv, {key:'plan', label:'תכנון ארון', icon:'plan', min:0, max:120, step:5, unit:'דק׳'});
+field(sv, {key:'travelMin', label:'נסיעה הלוך-חזור', icon:'car', min:0, max:120, step:5, unit:'דק׳'});
+field(sv, {key:'travelCost', label:'עלות נסיעה לביקור', icon:'car', min:0, max:100, step:1, unit:'₪'});
+
+const tm = document.getElementById('f-time');
+field(tm, {key:'days', label:'ימי עבודה בשבוע', icon:'calendar', min:1, max:6, step:0.5, dec:1, unit:'ימים'});
+field(tm, {key:'start', label:'מתחילה לעבוד', icon:'sun', min:6, max:16, step:0.25, fmt:hhmm});
+field(tm, {key:'end', label:'מסיימת (יציאה לילדים)', icon:'home', min:9, max:22, step:0.25, fmt:hhmm});
+field(tm, {key:'mkt', label:'פרסום ושיווק', icon:'mega', min:0, max:12, step:0.5, dec:1, unit:'שע׳ בשבוע'});
+field(tm, {key:'phone', label:'טלפונים ותיאומים', icon:'phone', min:0, max:12, step:0.5, dec:1, unit:'שע׳ בשבוע'});
+field(tm, {key:'books', label:'הנהלת חשבונות', icon:'ledger', min:0, max:6, step:0.25, dec:2, unit:'שע׳ בשבוע'});
+
+const mn = document.getElementById('f-money');
+field(mn, {key:'ads', label:'פרסום בתשלום', icon:'mega', min:0, max:3000, step:50, unit:'₪ לחודש'});
+field(mn, {key:'acct', label:'רואה חשבון', icon:'receipt', min:0, max:1500, step:25, unit:'₪ לחודש'});
+field(mn, {key:'other', label:'טלפון ושונות', icon:'phone', min:0, max:1500, step:25, unit:'₪ לחודש'});
+field(mn, {key:'tax', label:'מס וביטוח לאומי', icon:'percent', min:0, max:50, step:1, unit:'%'});
+field(mn, {key:'startup', label:'השקעה ראשונית', icon:'briefcase', min:0, max:20000, step:100, unit:'₪'});
+field(mn, {key:'months', label:'כמה זמן לנסות', icon:'calendar', min:1, max:36, step:1, unit:'חודשים'});
+field(mn, {key:'alt', label:'שכר לשעה בעבודה אחרת', icon:'wallet', min:30, max:200, step:1, unit:'₪ נטו'});
+
+/* trio */
+const trioEl = document.getElementById('trio');
+const TRIO = [
+  {key:'price', label:'מחיר לשעת עבודה אצל לקוחה', icon:'coins', min:40, max:500, numMax:5000, step:5, unit:'₪'},
+  {key:'hours', label:'שעות אצל לקוחות בחודש', icon:'hours', min:0, max:200, numMax:2000, step:1, unit:'שע׳'},
+  {key:'net', label:'נשאר ביד בחודש (נטו)', icon:'wallet', min:-5000, max:30000, numMax:1e6, step:100, unit:'₪'}
+];
+TRIO.forEach(d => {
+  const box = document.createElement('div'); box.className = 'tfield'; box.id = 'box_' + d.key;
+  trioEl.appendChild(box);
+  d.extra = `<button type="button" class="lock" id="lock_${d.key}"></button>`;
+  field(box, d);
+  const extra = document.createElement('div'); extra.className = 'warnline'; extra.id = 'warn_' + d.key; box.appendChild(extra);
+  document.getElementById('lock_'+d.key).addEventListener('click', () => { S.lock = d.key; save(); render(); });
+});
+
+/* ---- measuring drawer with stopwatch ---- */
+let drawer = null, swTimer = null, swStart = 0, swAcc = 0;
+function toggleDrawer(it, row) {
+  const was = drawer && drawer.dataset.id === it.id;
+  closeDrawer();
+  if (was) return;
+  drawer = document.createElement('div'); drawer.className = 'drawer'; drawer.dataset.id = it.id;
+  drawer.innerHTML = `
+    <span class="stopwatch" id="swShow">00:00.0</span>
+    <button type="button" class="btn" id="swGo">התחל</button>
+    <button type="button" class="btn" id="swReset">אפס</button>
+    <label>קיפלתי <input type="number" id="mN" value="10" min="1" step="1"> ${it.name}</label>
+    <label>ב- <input type="number" id="mMin" value="0" min="0" step="1"> דק׳ <input type="number" id="mSec" value="0" min="0" step="1"> שנ׳</label>
+    <span class="res" id="mRes"></span>
+    <button type="button" class="btn primary" id="mUse">קבע את הזמן</button>`;
+  row.appendChild(drawer);
+  const show = drawer.querySelector('#swShow'), go = drawer.querySelector('#swGo');
+  const mN = drawer.querySelector('#mN'), mMin = drawer.querySelector('#mMin'), mSec = drawer.querySelector('#mSec'), res = drawer.querySelector('#mRes');
+  const total = () => (+mMin.value||0)*60 + (+mSec.value||0);
+  const per = () => { const n = +mN.value||0; return n > 0 ? total()/n : NaN; };
+  const upd = () => { const p = per(); res.textContent = isFinite(p) && total() > 0 ? `= ${nf(p,1)} שניות לפריט` : 'מזינים כמה פריטים ובכמה זמן, או מפעילים את השעון'; };
+  const fmt = (ms) => { const s = ms/1000; return String(Math.floor(s/60)).padStart(2,'0') + ':' + (s%60).toFixed(1).padStart(4,'0'); };
+  const sync = (ms) => { const s = Math.round(ms/1000); mMin.value = Math.floor(s/60); mSec.value = s%60; upd(); };
+  swAcc = 0;
+  go.addEventListener('click', () => {
+    if (swTimer) { swAcc += Date.now() - swStart; clearInterval(swTimer); swTimer = null; go.textContent = 'המשך'; sync(swAcc); show.textContent = fmt(swAcc); }
+    else { swStart = Date.now(); swTimer = setInterval(() => show.textContent = fmt(swAcc + Date.now() - swStart), 100); go.textContent = 'עצור'; }
+  });
+  drawer.querySelector('#swReset').addEventListener('click', () => { clearInterval(swTimer); swTimer = null; swAcc = 0; show.textContent = fmt(0); go.textContent = 'התחל'; sync(0); });
+  [mN, mMin, mSec].forEach(x => x.addEventListener('input', upd));
+  drawer.querySelector('#mUse').addEventListener('click', () => {
+    const p = per(); if (!isFinite(p) || p <= 0) { res.textContent = 'צריך זמן גדול מאפס וכמות של פריט אחד לפחות'; return; }
+    S['t_'+it.id] = Math.round(p); paint('t_'+it.id); onChange('t_'+it.id); closeDrawer();
+  });
+  upd();
+}
+function closeDrawer(){ clearInterval(swTimer); swTimer = null; if (drawer) drawer.remove(); drawer = null; }
+
+/* ---- model ---- */
+function model() {
+  const fold = ITEMS.reduce((s,i) => s + S['q_'+i.id]*S['t_'+i.id], 0) * S.diff / 3600;
+  const svc = (S.clear + S.arrange + S.plan) / 60;
+  const vh = Math.max(fold + svc, 0.01);
+  const tr = S.travelMin / 60;
+  const dayH = Math.max(0, S.end - S.start);
+  const W = S.days * WEEKS * dayH;
+  const O = (S.mkt + S.phone + S.books) * WEEKS;
+  const Bmax = Math.max(0, (W - O) / (1 + tr / vh));
+  const Fx = S.ads + S.acct + S.other;
+  const t = S.tax / 100;
+  return {fold, svc, vh, tr, dayH, W, O, Bmax, Fx, t, tc:S.travelCost};
+}
+const preOf = (net, t) => net > 0 ? net / (1 - t) : net;
+function netFrom(m, price, B){ const pre = price*B - m.Fx - (B/m.vh)*m.tc; return pre > 0 ? pre*(1-m.t) : pre; }
+function priceFrom(m, net, B){ return B > 0 ? (preOf(net,m.t) + m.Fx + (B/m.vh)*m.tc) / B : NaN; }
+function hoursFrom(m, net, price){ const d = price - m.tc/m.vh; return d > 0 ? (preOf(net,m.t) + m.Fx) / d : Infinity; }
+
+let lastTarget = null;
+function solve(dragged) {
+  const m = model();
+  const order = ['net','price','hours'];
+  const target = dragged === S.lock || !dragged
+    ? order.find(k => k !== (dragged || S.lock))
+    : order.find(k => k !== dragged && k !== S.lock);
+  if (target === 'net') S.net = netFrom(m, S.price, S.hours);
+  if (target === 'price') { const p = priceFrom(m, S.net, S.hours); if (isFinite(p)) S.price = p; else S.net = netFrom(m, S.price, S.hours); }
+  if (target === 'hours') { const h = hoursFrom(m, S.net, S.price); if (isFinite(h) && h >= 0) S.hours = h; else { S.hours = 0; S.net = netFrom(m, S.price, 0); } }
+  lastTarget = target;
+}
+
+function onChange(key, f, fromNum) {
+  if (key === 'start' && S.end < S.start + 0.5) { S.end = S.start + 0.5; paint('end'); }
+  if (key === 'end' && S.end < S.start + 0.5) { S.start = Math.max(6, S.end - 0.5); paint('start'); }
+  if (TRIO.some(d => d.key === key)) solve(key); else solve(null);
+  paint(key, fromNum);
+  render(key);
+  save();
+}
+
+/* ---- render outputs ---- */
+function render(skipKey) {
+  const m = model();
+  ['price','hours','net'].forEach(k => { if (k !== skipKey) paint(k); });
+  TRIO.forEach(d => {
+    const box = document.getElementById('box_'+d.key);
+    const locked = S.lock === d.key;
+    box.classList.toggle('locked', locked);
+    document.getElementById('lock_'+d.key).innerHTML = svg(locked ? 'lock' : 'unlock') + (locked ? 'נעול' : 'לנעול');
+    box.classList.remove('changed');
+    if (d.key === lastTarget) { void box.offsetWidth; box.classList.add('changed'); }
+  });
+
+  const B = S.hours, price = S.price, net = S.net;
+  const visits = B / m.vh;
+  const workdays = S.days * WEEKS;
+  const vpd = workdays > 0 ? visits / workdays : 0;
+  const travelH = visits * m.tr;
+  const totalH = B + travelH + m.O;
+  const gross = price * B;
+  const travelCosts = visits * m.tc;
+  const pre = gross - m.Fx - travelCosts;
+  const tax = pre > 0 ? pre * m.t : 0;
+  const eff = totalH > 0 ? net / totalH : 0;
+  const over = B > m.Bmax + 0.05;
+
+  // warnings
+  document.getElementById('warn_hours').textContent = over
+    ? `צריך ${nf(B)} שעות, ובזמן שהגדרת נכנסות רק ${nf(m.Bmax)} (אחרי נסיעות ועבודה משרדית).`
+    : `≈ ${nf(visits,1)} ביקורים בחודש, ${nf(vpd,1)} ביום עבודה. אפשר עד ${nf(m.Bmax)} שעות.`;
+  document.getElementById('warn_price').textContent = `ביקור רגיל (${dur(m.vh)}) עולה ללקוחה ${ils(price*m.vh)}`;
+  document.getElementById('warn_net').textContent = net < 0 ? 'בהפסד: ההוצאות גבוהות מההכנסות' : `${ils(net*S.months - S.startup)} אחרי ${S.months} חודשים, כולל ההשקעה הראשונית`;
+  ['price','hours','net'].forEach(k => document.getElementById('warn_'+k).style.color = (k==='hours'&&over)||(k==='net'&&net<0) ? 'var(--bad)' : 'var(--muted)');
+
+  // verdict
+  const v = document.getElementById('verdict');
+  let cls, title, text;
+  if (over) { cls='bad'; title='לא נכנס בזמן שיש לה'; text='צריך יותר שעות ממה שהוגדר. מעלים מחיר, מוסיפים ימים או מקצרים נסיעות.'; }
+  else if (net <= 0) { cls='bad'; title='העסק מפסיד כרגע'; text='ההוצאות הקבועות והנסיעות גדולות מההכנסה. מעלים מחיר או שעות.'; }
+  else if (eff >= S.alt * 1.15) { cls='good'; title='נראה משתלם'; text=`כל שעה שלה, כולל נסיעות ומשרד, שווה ${ils(eff)}. זה מעל ${ils(S.alt)} בעבודה האחרת.`; }
+  else if (eff >= S.alt * 0.9) { cls='warn'; title='גבולי'; text=`שעה שלה שווה ${ils(eff)}, קרוב ל-${ils(S.alt)} בעבודה האחרת. היתרון כאן הוא הגמישות.`; }
+  else { cls='bad'; title='פחות משתלם מעבודה אחרת'; text=`שעה שלה שווה ${ils(eff)}, פחות מ-${ils(S.alt)} בעבודה האחרת.`; }
+  v.className = 'verdict ' + cls;
+  document.getElementById('vTitle').textContent = title;
+  document.getElementById('vText').textContent = text;
+
+  // kpis
+  const payback = net > 0 ? S.startup / net : Infinity;
+  document.getElementById('kpis').innerHTML = [
+    ['שווי אמיתי של שעה שלה', ils(eff), 'נטו, כולל נסיעות ועבודה משרדית'],
+    ['ביקור רגיל', dur(m.vh), `קיפול ${dur(m.fold)} + ארון ${dur(m.svc)}`],
+    ['סך שעות עבודה בחודש', nf(totalH), `מתוך ${nf(m.W)} שעות פנויות (${nf(m.W>0?totalH/m.W*100:0)}%)`],
+    ['החזר ההשקעה', isFinite(payback) ? (payback < 1 ? 'בחודש הראשון' : nf(payback,1) + ' חודשים') : 'לא מוחזרת', `השקעה של ${ils(S.startup)}`]
+  ].map(([k,v,s]) => `<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('');
+
+  // time bar
+  const free = Math.max(0, m.W - totalH);
+  const tbase = Math.max(m.W, totalH) || 1;
+  const tparts = [['אצל לקוחות', B, 'var(--accent)'], ['נסיעות', travelH, 'var(--sand)'], ['משרד ושיווק', m.O, 'var(--lav)'], ['פנוי', free, 'transparent']];
+  document.getElementById('timeBar').innerHTML = tparts.map(([,h,c]) => `<i style="width:${h/tbase*100}%;background:${c}"></i>`).join('');
+  document.getElementById('timeLegend').innerHTML = tparts.map(([n,h,c]) => `<span><i style="background:${c==='transparent'?'var(--line)':c}"></i>${n} <b>${nf(h)}</b> שע׳</span>`).join('') + (over ? `<span style="color:var(--bad)">חסרות ${nf(totalH-m.W)} שע׳</span>` : '');
+
+  // money bar
+  const mparts = [['נטו', Math.max(net,0), 'var(--good)'], ['מס וב״ל', tax, 'var(--sky)'], ['הוצאות קבועות', m.Fx, 'var(--rose)'], ['נסיעות', travelCosts, 'var(--sand)']];
+  const mbase = Math.max(gross, m.Fx + travelCosts) || 1;
+  document.getElementById('moneyBar').innerHTML = mparts.map(([,x,c]) => `<i style="width:${x/mbase*100}%;background:${c}"></i>`).join('');
+  document.getElementById('moneyLegend').innerHTML = `<span>הכנסה <b>${ils(gross)}</b></span>` + mparts.map(([n,x,c]) => `<span><i style="background:${c}"></i>${n} <b>${ils(x)}</b></span>`).join('');
+
+  // day timeline
+  const day = document.getElementById('day'), ticks = document.getElementById('ticks');
+  const span = Math.max(m.dayH, 0.5);
+  const nv = Math.max(0, Math.ceil(vpd - 0.05));
+  let cur = 0, html = '';
+  const pos = (a, w) => `right:${Math.min(a,span)/span*100}%;width:${Math.max(0,Math.min(w, span-a))/span*100}%`;
+  for (let i = 0; i < nv && cur < span; i++) {
+    const frac = (i === nv-1 && vpd % 1 > 0.05) ? vpd % 1 : 1;
+    const tw = m.tr/2, vw = m.vh * frac;
+    html += `<div class="blk t" style="${pos(cur, tw)}"></div>`; cur += tw;
+    const isOver = cur + vw > span + 0.01;
+    html += `<div class="blk v${isOver?' over':''}" style="${pos(cur, vw)}" title="ביקור">${vw/span > .12 ? 'ביקור' + (frac<1?' חלקי':'') : ''}</div>`; cur += vw;
+    html += `<div class="blk t" style="${pos(cur, tw)}"></div>`; cur += tw;
+  }
+  day.innerHTML = html;
+  let th = '';
+  for (let h = Math.ceil(S.start); h <= S.end; h += (span > 8 ? 2 : 1)) th += `<span style="right:${(h - S.start)/span*100}%">${hhmm(h)}</span>`;
+  ticks.innerHTML = th;
+  const finish = S.start + vpd * (m.vh + m.tr);
+  document.getElementById('dayNote').textContent = vpd > 0
+    ? `${nf(vpd,1)} ביקורים ביום עם נסיעות. מתחילה ב-${hhmm(S.start)}, מסיימת בערך ב-${finish < 24 ? hhmm(finish) : '—'}${finish > S.end + 0.01 ? `, אחרי ${hhmm(S.end)}` : ''}.`
+    : 'אין ביקורים. מזיזים את שעות העבודה בחודש.';
+
+  // price list
+  const pr = price;
+  const rows = ITEMS.map(i => { const u = pr * S['t_'+i.id] * S.diff / 3600; return [i.icon, i.name, ils(u,2), ils(u*10,1)]; });
+  rows.push(['box','פינוי ארון', ils(pr*S.clear/60), '']);
+  rows.push(['hanger','סידור ארון', ils(pr*S.arrange/60), '']);
+  rows.push(['plan','תכנון ארון', ils(pr*S.plan/60), '']);
+  rows.push(['home','ביקור רגיל שלם', ils(pr*m.vh), '']);
+  document.getElementById('prices').innerHTML = rows.map(([ic,n,a,b]) => `<tr><td><span class="cell">${svg(ic)}${n}</span></td><td class="n">${a}</td><td class="n">${b}</td></tr>`).join('');
+
+  // per-item totals
+  ITEMS.forEach(i => { document.getElementById('tot_'+i.id).textContent = `${dur(S['q_'+i.id]*S['t_'+i.id]*S.diff/3600)} בביקור`; });
+  F.diff.hint.textContent = S.diff < 0.9 ? 'בית מסודר, בגדים פשוטים' : S.diff > 1.25 ? 'בגדים מסובכים, בלגן, הרבה פריטים קטנים' : 'בית רגיל';
+}
+
+/* reset (two-step, no browser dialogs) */
+const rb = document.getElementById('resetBtn'); let rbArm = null;
+rb.addEventListener('click', () => {
+  if (!rbArm) { rb.textContent = 'לחיצה נוספת תמחק את השינויים'; rb.classList.add('danger'); rbArm = setTimeout(() => { rbArm = null; rb.textContent = 'איפוס לדוגמה'; rb.classList.remove('danger'); }, 3500); return; }
+  clearTimeout(rbArm); rbArm = null; rb.textContent = 'איפוס לדוגמה'; rb.classList.remove('danger');
+  S = {...DEF}; closeDrawer(); init();
+});
+
+function init(){ Object.keys(F).forEach(k => paint(k)); solve(null); render(); save(); }
+init();
+</script>
+
+</body>
+</html>
